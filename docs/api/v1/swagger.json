@@ -1,0 +1,930 @@
+{
+	"openapi": "3.0.3",
+	"info": {
+		"title": "Tasks REST API",
+		"description": "REST API для управления списком задач и пользователями",
+		"version": "1.0.0"
+	},
+	"servers": [
+		{
+			"url": "http://localhost:8080/api/{version}",
+			"description": "Local development server",
+			"variables": {
+				"version": {
+					"default": "v1",
+					"enum": ["v1"]
+				}
+			}
+		}
+	],
+	"tags": [
+		{
+			"name": "Authentication",
+			"description": "Аутентификация, регистрация и управление профилем"
+		},
+		{
+			"name": "Tasks",
+			"description": "Управление задачами"
+		}
+	],
+	"security": [
+		{
+			"bearerAuth": []
+		}
+	],
+	"paths": {
+		"/auth/login": {
+			"post": {
+				"tags": ["Authentication"],
+				"summary": "Авторизация и получение JWT",
+				"description": "Возвращает access_token и данные пользователя для доступа к API",
+				"security": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": ["email", "password"],
+								"properties": {
+									"email": {
+										"type": "string",
+										"format": "email",
+										"example": "admin@email.ru"
+									},
+									"password": {
+										"type": "string",
+										"format": "password",
+										"example": "12345"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Успешная авторизация",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthResponse"
+								},
+								"example": {
+									"access_token": "eyJhbGciOiJIUzI1NiIs...",
+									"token_type": "Bearer",
+									"expires_in": 3600,
+									"data": {
+										"id": 4,
+										"name": "zgrigorev",
+										"email": "admin@email.ru",
+										"firstname": "Инга",
+										"lastname": "Савин",
+										"phone": "(35222) 15-2789",
+										"created_at": "2026-06-26T18:05:59.000000Z",
+										"updated_at": "2026-06-26T18:05:59.000000Z"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Неверные учетные данные",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "string",
+											"example": "Неверный адрес электронной почты или пароль"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/register": {
+			"post": {
+				"tags": ["Authentication"],
+				"summary": "Регистрация нового пользователя",
+				"description": "Создаёт учётную запись пользователя и возвращает access_token с данными профиля",
+				"security": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RegisterRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Пользователь успешно зарегистрирован",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AuthResponse"
+								},
+								"example": {
+									"access_token": "eyJhbGciOiJIUzI1NiIs...",
+									"token_type": "Bearer",
+									"expires_in": 3600,
+									"data": {
+										"id": 4,
+										"name": "zgrigorev",
+										"email": "admin@email.ru",
+										"firstname": "Инга",
+										"lastname": "Савин",
+										"phone": "(35222) 15-2789",
+										"created_at": "2026-06-26T18:05:59.000000Z",
+										"updated_at": "2026-06-26T18:05:59.000000Z"
+									}
+								}
+							}
+						}
+					},
+					"422": {
+						"$ref": "#/components/responses/ValidationError"
+					}
+				}
+			}
+		},
+		"/auth/update": {
+			"post": {
+				"tags": ["Authentication"],
+				"summary": "Обновление профиля пользователя",
+				"description": "Обновляет данные текущего аутентифицированного пользователя",
+				"security": [{ "bearerAuth": [] }],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateUserRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Профиль обновлён",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProfileResponse"
+								},
+								"example": {
+									"data": {
+										"name": "test",
+										"firstname": "Илон",
+										"lastname": "Маск",
+										"email": "test1@email.ru",
+										"phone": "89608089559"
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Неавторизованный доступ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "string",
+											"example": "Требуется вход в систему"
+										}
+									}
+								}
+							}
+						}
+					},
+					"422": {
+						"$ref": "#/components/responses/ValidationError"
+					}
+				}
+			}
+		},
+		"/auth/logout": {
+			"get": {
+				"tags": ["Authentication"],
+				"summary": "Выход из системы",
+				"description": "Завершает сеанс текущего пользователя и инвалидирует токен",
+				"security": [{ "bearerAuth": [] }],
+				"responses": {
+					"204": {
+						"description": "Успешный выход (No Content)"
+					},
+					"401": {
+						"description": "Неавторизованный доступ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "string",
+											"example": "Требуется вход в систему"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tasks": {
+			"get": {
+				"tags": ["Tasks"],
+				"summary": "Получение списка задач",
+				"description": "Возвращает список задач с возможностью поиска, сортировки и пагинации",
+				"parameters": [
+					{
+						"name": "search",
+						"in": "query",
+						"description": "Поиск по названию задачи",
+						"schema": { "type": "string" },
+						"example": "какая то задача"
+					},
+					{
+						"name": "sort",
+						"in": "query",
+						"description": "Поле для сортировки",
+						"schema": { "type": "string", "enum": ["due_date", "created_at"] },
+						"example": "due_date"
+					},
+					{
+						"name": "per_page",
+						"in": "query",
+						"description": "Количество задач на странице (макс. 100)",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100,
+							"default": 10
+						},
+						"example": 10
+					},
+					{
+						"name": "page",
+						"in": "query",
+						"description": "Номер страницы",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100,
+							"default": 1
+						},
+						"example": 1
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Успешный ответ со списком задач",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "array",
+											"items": { "$ref": "#/components/schemas/Task" }
+										},
+										"meta": {
+											"type": "object",
+											"properties": {
+												"current_page": { "type": "integer" },
+												"from": { "type": "integer", "nullable": true },
+												"last_page": { "type": "integer" },
+												"path": { "type": "string" },
+												"per_page": { "type": "integer" },
+												"to": { "type": "integer", "nullable": true },
+												"total": { "type": "integer" }
+											}
+										},
+										"links": {
+											"type": "object",
+											"properties": {
+												"first": { "type": "string", "nullable": true },
+												"last": { "type": "string", "nullable": true },
+												"prev": { "type": "string", "nullable": true },
+												"next": { "type": "string", "nullable": true }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": ["Tasks"],
+				"summary": "Создание задачи",
+				"description": "Создаёт новую задачу. Поля `status_id`, `priority_id`, `category_id` принимают числовые идентификаторы. Возвращает созданную задачу с вложенными статусом, приоритетом и категорией.",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/StoreTaskRequest" }
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Задача успешно создана",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"$ref": "#/components/schemas/Task"
+										}
+									}
+								},
+								"example": {
+									"data": {
+										"id": 26,
+										"title": "Согласовать дизайн главной страницы",
+										"description": "Необходимо финализировать макет и передать на вёрстку до 30 июня",
+										"due_date": "2026-06-30T17:00:00",
+										"created_at": "2026-06-26T18:19:21",
+										"status": {
+											"id": 1,
+											"name": "Выполнена",
+											"slug": "completed"
+										},
+										"priority": {
+											"id": 1,
+											"name": "Низкий",
+											"slug": "low",
+											"color": "#3b82f6",
+											"level": 0
+										},
+										"category": {
+											"id": 1,
+											"name": "Работа",
+											"slug": "work"
+										}
+									}
+								}
+							}
+						}
+					},
+					"422": { "$ref": "#/components/responses/ValidationError" }
+				}
+			}
+		},
+		"/tasks/{id}": {
+			"get": {
+				"tags": ["Tasks"],
+				"summary": "Получение задачи",
+				"description": "Возвращает задачу по её ID. Статус, приоритет и категория представлены в виде вложенных объектов.",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"description": "ID задачи",
+						"schema": { "type": "integer" },
+						"example": 1
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Успешный ответ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": { "$ref": "#/components/schemas/Task" }
+									}
+								}
+							}
+						}
+					},
+					"404": { "$ref": "#/components/responses/NotFound" }
+				}
+			},
+			"put": {
+				"tags": ["Tasks"],
+				"summary": "Обновление задачи",
+				"description": "Обновляет информацию о задаче. Все поля опциональны. Возвращает обновлённый объект задачи.",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"description": "ID задачи",
+						"schema": { "type": "integer" },
+						"example": 1
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": { "$ref": "#/components/schemas/UpdateTaskRequest" }
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Задача успешно обновлена",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"$ref": "#/components/schemas/Task"
+										}
+									}
+								},
+								"example": {
+									"data": {
+										"id": 1,
+										"title": "Обновлённый заголовок задачи",
+										"description": "Обновлённое описание с уточнением деталей выполнения и сроков.",
+										"due_date": "2026-06-30T17:00:00",
+										"created_at": "2026-06-26T18:05:59",
+										"status": {
+											"id": 2,
+											"name": "Не выполнена",
+											"slug": "pending"
+										},
+										"priority": {
+											"id": 2,
+											"name": "Средний",
+											"slug": "medium",
+											"color": "#f59e0b",
+											"level": 1
+										},
+										"category": {
+											"id": 1,
+											"name": "Работа",
+											"slug": "work"
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": { "$ref": "#/components/responses/NotFound" },
+					"422": { "$ref": "#/components/responses/ValidationError" }
+				}
+			},
+			"delete": {
+				"tags": ["Tasks"],
+				"summary": "Удаление задачи",
+				"description": "Удаляет задачу по её ID. При успешном удалении возвращает статус 204 без содержимого.",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"description": "ID задачи",
+						"schema": { "type": "integer" },
+						"example": 1
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Задача успешно удалена (No Content)"
+					},
+					"404": { "$ref": "#/components/responses/NotFound" }
+				}
+			}
+		}
+	},
+	"components": {
+		"securitySchemes": {
+			"bearerAuth": {
+				"type": "http",
+				"scheme": "Bearer",
+				"bearerFormat": "JWT"
+			}
+		},
+		"schemas": {
+			"RegisterRequest": {
+				"type": "object",
+				"required": ["name", "password", "firstname", "lastname", "email", "phone"],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Логин пользователя",
+						"example": "test"
+					},
+					"password": {
+						"type": "string",
+						"format": "password",
+						"description": "Пароль",
+						"example": "123456789"
+					},
+					"firstname": {
+						"type": "string",
+						"description": "Имя",
+						"example": "Илон"
+					},
+					"lastname": {
+						"type": "string",
+						"description": "Фамилия",
+						"example": "Маск"
+					},
+					"email": {
+						"type": "string",
+						"format": "email",
+						"description": "Email адрес",
+						"example": "test@email.ru"
+					},
+					"phone": {
+						"type": "string",
+						"description": "Номер телефона",
+						"example": "89608089559"
+					}
+				}
+			},
+			"UpdateUserRequest": {
+				"type": "object",
+				"required": ["name", "password", "firstname", "lastname", "email", "phone"],
+				"properties": {
+					"name": { "type": "string", "example": "test" },
+					"password": { "type": "string", "format": "password", "example": "123456789" },
+					"firstname": { "type": "string", "example": "Илон" },
+					"lastname": { "type": "string", "example": "Маск" },
+					"email": { "type": "string", "format": "email", "example": "test@email.ru" },
+					"phone": { "type": "string", "example": "89608089559" }
+				}
+			},
+			"User": {
+				"type": "object",
+				"description": "Данные пользователя",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"description": "Идентификатор пользователя",
+						"example": 4
+					},
+					"name": {
+						"type": "string",
+						"description": "Логин",
+						"example": "zgrigorev"
+					},
+					"email": {
+						"type": "string",
+						"format": "email",
+						"description": "Email",
+						"example": "admin@email.ru"
+					},
+					"firstname": {
+						"type": "string",
+						"description": "Имя",
+						"example": "Инга"
+					},
+					"lastname": {
+						"type": "string",
+						"description": "Фамилия",
+						"example": "Савин"
+					},
+					"phone": {
+						"type": "string",
+						"description": "Номер телефона",
+						"example": "(35222) 15-2789"
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Дата создания",
+						"example": "2026-06-26T18:05:59.000000Z"
+					},
+					"updated_at": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Дата последнего обновления",
+						"example": "2026-06-26T18:05:59.000000Z"
+					}
+				}
+			},
+			"AuthResponse": {
+				"type": "object",
+				"description": "Ответ с JWT-токеном и данными пользователя",
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"example": "eyJhbGciOiJIUzI1NiIs..."
+					},
+					"token_type": {
+						"type": "string",
+						"example": "Bearer"
+					},
+					"expires_in": {
+						"type": "integer",
+						"example": 3600
+					},
+					"data": {
+						"$ref": "#/components/schemas/User"
+					}
+				}
+			},
+			"ProfileData": {
+				"type": "object",
+				"description": "Публичные данные профиля (без пароля и идентификаторов)",
+				"properties": {
+					"name": {
+						"type": "string",
+						"example": "test"
+					},
+					"firstname": {
+						"type": "string",
+						"example": "Илон"
+					},
+					"lastname": {
+						"type": "string",
+						"example": "Маск"
+					},
+					"email": {
+						"type": "string",
+						"format": "email",
+						"example": "test1@email.ru"
+					},
+					"phone": {
+						"type": "string",
+						"example": "89608089559"
+					}
+				}
+			},
+			"ProfileResponse": {
+				"type": "object",
+				"description": "Ответ после обновления профиля",
+				"properties": {
+					"data": {
+						"$ref": "#/components/schemas/ProfileData"
+					}
+				}
+			},
+			"Status": {
+				"type": "object",
+				"description": "Статус задачи",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"description": "Идентификатор статуса",
+						"example": 2
+					},
+					"name": {
+						"type": "string",
+						"description": "Название статуса на русском",
+						"example": "Не выполнена"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Машинное имя статуса",
+						"example": "pending"
+					}
+				}
+			},
+			"Priority": {
+				"type": "object",
+				"description": "Приоритет задачи",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"description": "Идентификатор приоритета",
+						"example": 2
+					},
+					"name": {
+						"type": "string",
+						"description": "Название приоритета на русском",
+						"example": "Средний"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Машинное имя приоритета",
+						"example": "medium"
+					},
+					"color": {
+						"type": "string",
+						"description": "Цвет приоритета в HEX",
+						"example": "#f59e0b"
+					},
+					"level": {
+						"type": "integer",
+						"description": "Уровень приоритета (чем выше, тем важнее)",
+						"example": 1
+					}
+				}
+			},
+			"Category": {
+				"type": "object",
+				"description": "Категория задачи",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"description": "Идентификатор категории",
+						"example": 1
+					},
+					"name": {
+						"type": "string",
+						"description": "Название категории на русском",
+						"example": "Работа"
+					},
+					"slug": {
+						"type": "string",
+						"description": "Машинное имя категории",
+						"example": "work"
+					}
+				}
+			},
+			"Task": {
+				"type": "object",
+				"description": "Задача с вложенными объектами статуса, приоритета и категории",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"description": "ID задачи",
+						"example": 1
+					},
+					"title": {
+						"type": "string",
+						"description": "Название задачи",
+						"maxLength": 255,
+						"example": "Согласовать дизайн главной страницы"
+					},
+					"description": {
+						"type": "string",
+						"description": "Описание задачи",
+						"nullable": true,
+						"example": "Необходимо финализировать макет и передать на вёрстку до 30 июня"
+					},
+					"due_date": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Срок выполнения",
+						"example": "2026-06-30T17:00:00"
+					},
+					"created_at": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Дата создания",
+						"example": "2026-06-26T18:05:59"
+					},
+					"status": {
+						"$ref": "#/components/schemas/Status"
+					},
+					"priority": {
+						"$ref": "#/components/schemas/Priority"
+					},
+					"category": {
+						"$ref": "#/components/schemas/Category"
+					}
+				}
+			},
+			"StoreTaskRequest": {
+				"type": "object",
+				"description": "Запрос на создание задачи. Используются числовые идентификаторы для статуса, приоритета и категории.",
+				"properties": {
+					"title": {
+						"type": "string",
+						"description": "Название задачи",
+						"maxLength": 255,
+						"example": "Согласовать дизайн главной страницы"
+					},
+					"description": {
+						"type": "string",
+						"description": "Описание задачи",
+						"nullable": true,
+						"example": "Необходимо финализировать макет и передать на вёрстку до 30 июня"
+					},
+					"due_date": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Срок выполнения",
+						"example": "2026-06-30T17:00:00"
+					},
+					"status_id": {
+						"type": "integer",
+						"description": "Статус задачи: 1 - Выполнена, 2 - Не выполнена (по умолчанию 2)",
+						"enum": [1, 2],
+						"default": 2,
+						"example": 1
+					},
+					"priority_id": {
+						"type": "integer",
+						"description": "Приоритет задачи: 1 - Низкий, 2 - Средний, 3 - Высокий (по умолчанию 2)",
+						"enum": [1, 2, 3],
+						"default": 2,
+						"example": 1
+					},
+					"category_id": {
+						"type": "integer",
+						"description": "Категория задачи: 1 - Работа, 2 - Дом, 3 - Личное",
+						"enum": [1, 2, 3],
+						"example": 1
+					}
+				}
+			},
+			"UpdateTaskRequest": {
+				"type": "object",
+				"description": "Запрос на обновление задачи. Все поля опциональны.",
+				"properties": {
+					"title": {
+						"type": "string",
+						"description": "Название задачи",
+						"maxLength": 255,
+						"example": "Обновить заголовок задачи"
+					},
+					"description": {
+						"type": "string",
+						"description": "Описание задачи",
+						"nullable": true,
+						"example": "Добавить описание с новыми требованиями и уточнениями по срокам"
+					},
+					"due_date": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Срок выполнения",
+						"example": "2026-06-30T17:00:00"
+					},
+					"status_id": {
+						"type": "integer",
+						"description": "Статус задачи: 1 - Выполнена, 2 - Не выполнена",
+						"enum": [1, 2],
+						"example": 2
+					},
+					"priority_id": {
+						"type": "integer",
+						"description": "Приоритет задачи: 1 - Низкий, 2 - Средний, 3 - Высокий",
+						"enum": [1, 2, 3],
+						"example": 3
+					},
+					"category_id": {
+						"type": "integer",
+						"description": "Категория задачи: 1 - Работа, 2 - Дом, 3 - Личное",
+						"enum": [1, 2, 3],
+						"example": 3
+					}
+				}
+			}
+		},
+		"responses": {
+			"ValidationError": {
+				"description": "Ошибка валидации",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "string",
+									"example": "Ошибка валидации"
+								},
+								"errors": {
+									"type": "object",
+									"additionalProperties": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						},
+						"example": {
+							"error": "Ошибка валидации",
+							"errors": {
+								"category_id": ["Поле category id должно быть целым числом."]
+							}
+						}
+					}
+				}
+			},
+			"NotFound": {
+				"description": "Ресурс не найден",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "string",
+									"example": "Запрашиваемый ресурс не найден"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

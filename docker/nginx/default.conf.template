@@ -1,0 +1,20 @@
+server {
+    listen 80 default;
+    listen ${NGINX_PORT};
+    charset utf-8;
+    root /tasks-rest-api/public/;
+    client_max_body_size 0;
+    proxy_max_temp_file_size 0;
+    fastcgi_buffering off;
+    fastcgi_request_buffering off;
+
+    location ~ ^/(api)/ {
+        rewrite ^/(api)/(.*)$ /index.php;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_pass php-fpm:9000;
+    }
+}

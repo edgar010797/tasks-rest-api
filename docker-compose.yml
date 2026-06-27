@@ -1,0 +1,93 @@
+services:
+  postgres:
+    image: postgres:${POSTGRESQL_VERSION}
+    environment:
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_MULTIPLE_DATABASES=${DB_DATABASE},testing
+      - TZ=${TZ}
+    volumes:
+      - ./docker/postgres:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    ports:
+      - ${DB_PORT:-5430}:5432
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    image: nginx:${NGINX_VERSION}
+    environment:
+      - NGINX_PORT=${NGINX_PORT:-8080}
+      - TZ=${TZ}
+    volumes:
+      - ./docker/nginx:/etc/nginx/templates
+      - ./:/tasks-rest-api
+    ports:
+      - ${NGINX_HOST}:${NGINX_PORT:-8080}:80
+    restart: unless-stopped
+    depends_on:
+      php-fpm:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: service nginx status || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  php-fpm:
+    build:
+      context: ./docker/php-fpm
+      args:
+        - WWWUSER=${WWWUSER}
+        - PHP_VERSION=${PHP_VERSION:-8.4}
+        - PHP_XDEBUG=${PHP_XDEBUG:-0}
+        - TZ=${TZ}
+    volumes:
+      - ./:/tasks-rest-api
+    cap_add:
+      - SYS_PTRACE
+    environment:
+      - TZ=${TZ}
+      - COMPOSER_ALLOW_SUPERUSER=1
+    healthcheck:
+      test: ['CMD', 'cgi-fcgi', '-bind', '-connect', 'localhost:9000']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    working_dir: /tasks-rest-api
+    command: sh -c '
+      composer install &&
+      php-fpm'
+
+  swagger:
+    image: swaggerapi/swagger-ui:latest
+    ports:
+      - ${SWAGGER_PORT:-8081}:8080
+    environment:
+      URLS: '[{"url": "/docs/api/v1/swagger.json", "name": "API v1"}]'
+    volumes:
+      - ./docs/api:/usr/share/nginx/html/docs/api:ro
+    restart: unless-stopped
+    depends_on:
+      - nginx
+
+#  mailhog:
+#    image: teawithfruit/mailhog
+#    ports:
+#      - ${MAILHOG_PORT:-8090}:8025
+
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME:-tasks-rest-api}_network
+    driver: bridge
