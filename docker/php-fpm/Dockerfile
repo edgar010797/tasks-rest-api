@@ -19,6 +19,9 @@ RUN docker-php-ext-install zip
 RUN docker-php-ext-install pdo pdo_pgsql pgsql
 RUN docker-php-ext-install ffi
 
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
 ARG TZ
 ENV TZ=${TZ}
 RUN echo "date.timezone=${TZ}" > /usr/local/etc/php/conf.d/docker-php-ext-timezone.ini

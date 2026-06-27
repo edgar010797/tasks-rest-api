@@ -330,7 +330,7 @@
 			"post": {
 				"tags": ["Tasks"],
 				"summary": "Создание задачи",
-				"description": "Создаёт новую задачу. Поля `status_id`, `priority_id`, `category_id` принимают числовые идентификаторы. Возвращает созданную задачу с вложенными статусом, приоритетом и категорией.",
+				"description": "Создаёт новую задачу. Поля `status_id`, `priority_id`, `category_id` принимают числовые идентификаторы. Статусы: `Выполнена` - 1, `Не выполнена` - 2. Приоритеты: `Низкий` - 1, `Средний` - 2, `Высокий` - 3. Категории: `Работа` - 1, `Дом` - 2, `Личное` - 3. Возвращает созданную задачу с вложенными статусом, приоритетом и категорией.",
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -420,7 +420,7 @@
 			"put": {
 				"tags": ["Tasks"],
 				"summary": "Обновление задачи",
-				"description": "Обновляет информацию о задаче. Все поля опциональны. Возвращает обновлённый объект задачи.",
+				"description": "Обновляет информацию о задаче. Поля `status_id`, `priority_id`, `category_id` принимают числовые идентификаторы. Статусы: `Выполнена` - 1, `Не выполнена` - 2. Приоритеты: `Низкий` - 1, `Средний` - 2, `Высокий` - 3. Категории: `Работа` - 1, `Дом` - 2, `Личное` - 3. Все поля опциональны. Возвращает обновлённый объект задачи.",
 				"parameters": [
 					{
 						"name": "id",
@@ -557,14 +557,25 @@
 			},
 			"UpdateUserRequest": {
 				"type": "object",
-				"required": ["name", "password", "firstname", "lastname", "email", "phone"],
+				"description": "Запрос на обновление профиля. Все поля опциональны — передавайте только те, которые нужно изменить.",
 				"properties": {
-					"name": { "type": "string", "example": "test" },
-					"password": { "type": "string", "format": "password", "example": "123456789" },
-					"firstname": { "type": "string", "example": "Илон" },
-					"lastname": { "type": "string", "example": "Маск" },
-					"email": { "type": "string", "format": "email", "example": "test@email.ru" },
-					"phone": { "type": "string", "example": "89608089559" }
+					"name": {
+						"type": "string",
+						"description": "Логин пользователя",
+						"example": "test"
+					},
+					"firstname": {
+						"type": "string",
+						"example": "Илон"
+					},
+					"lastname": {
+						"type": "string",
+						"example": "Маск"
+					},
+					"phone": {
+						"type": "string",
+						"example": "87777777777"
+					}
 				}
 			},
 			"User": {
@@ -793,6 +804,7 @@
 			"StoreTaskRequest": {
 				"type": "object",
 				"description": "Запрос на создание задачи. Используются числовые идентификаторы для статуса, приоритета и категории.",
+				"required": ["title"],
 				"properties": {
 					"title": {
 						"type": "string",

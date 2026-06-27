@@ -213,7 +213,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\r\n    \"name\": \"test\",\r\n    \"password\": \"123456789\",\r\n    \"firstname\": \"Илон\",\r\n    \"lastname\": \"Маск\",\r\n    \"email\": \"test@email.ru\",\r\n    \"phone\": \"89608089559\"\r\n}",
+                  "raw": "{\r\n    \"name\": \"test1\",\r\n    \"firstname\": \"Илон\",\r\n    \"lastname\": \"Маск\",\r\n    \"phone\": \"89678789559\"\r\n}",
                   "options": {
                     "raw": {
                       "language": "json"

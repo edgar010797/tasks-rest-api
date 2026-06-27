@@ -82,10 +82,24 @@ services:
     depends_on:
       - nginx
 
-#  mailhog:
-#    image: teawithfruit/mailhog
-#    ports:
-#      - ${MAILHOG_PORT:-8090}:8025
+  #  mailhog:
+  #    image: teawithfruit/mailhog
+  #    ports:
+  #      - ${MAILHOG_PORT:-8090}:8025
+
+  redis:
+    image: redis:${REDIS_VERSION:-7}
+    volumes:
+      - ./docker/redis:/data
+    environment:
+      - TZ=${TZ}
+    restart: unless-stopped
+    command: redis-server --save "" --loglevel warning
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
 networks:
   default:

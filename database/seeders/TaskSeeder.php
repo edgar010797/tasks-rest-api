@@ -19,8 +19,8 @@ class TaskSeeder extends Seeder
             UserSeeder::class,
         ]);
 
-        Task::factory()->count(20)->ofUser('admin@email.ru')->create();
+        Task::factory()->count(200)->ofUser('admin@email.ru')->create();
         Task::factory()->ofUser('admin@email.ru')->title('Какая то задача')->create();
-        Task::factory()->count(10)->create();
+        Task::factory()->count(1000)->create();
     }
 }
