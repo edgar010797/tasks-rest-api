@@ -2,6 +2,7 @@
   "info": {
     "_postman_id": "801e21bf-89ee-42c0-bb3a-aa3454ddc9aa",
     "name": "TASKS REST API",
+    "description": "**base_url** \\- 127.0.0.1:8080/api",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "19316476"
   },
