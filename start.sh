@@ -8,8 +8,6 @@ for arg in "$@"; do
     fi
 done
 
-cd tasks-rest-api
-
 echo "Настройка окружения..."
 cp .env.dist .env
 
