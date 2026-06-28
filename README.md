@@ -9,7 +9,7 @@ git clone https://github.com/edgar010797/tasks-rest-api.git && cd tasks-rest-api
 ### Для запуска проекта выполните команду
 
 ```
-bash start.sh
+bash start.sh --with-tests
 ```
 
 ### Swagger
