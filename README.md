@@ -1,9 +1,9 @@
 # Тестовое задание на позицию php разработчика
 
-### Создаем локальную копию репозитория
+### Создаем локальную копию репозитория и заходим в папку
 
 ```
-git clone https://github.com/edgar010797/tasks-rest-api.git
+git clone https://github.com/edgar010797/tasks-rest-api.git && cd tasks-rest-api
 ```
 
 ### Для запуска проекта выполните команду
