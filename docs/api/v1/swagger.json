@@ -258,7 +258,7 @@
 					{
 						"name": "sort",
 						"in": "query",
-						"description": "Поле для сортировки",
+						"description": "Для сортировки задач по сроку выполнения (due_date) или дате создания (created_at) передавайте в параметре sort название поля для сортировки по возрастанию или с префиксом - для сортировки по убыванию (например, due_date или -created_at).",
 						"schema": { "type": "string", "enum": ["due_date", "created_at"] },
 						"example": "due_date"
 					},

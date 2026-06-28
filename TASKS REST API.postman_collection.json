@@ -280,7 +280,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/tasks?search=какая то задача&sort=created_at&per_page=10&page=1",
+                  "raw": "{{base_url}}/v1/tasks?search=какая то задача&sort=-created_at&per_page=10&page=1",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -296,8 +296,8 @@
                     },
                     {
                       "key": "sort",
-                      "value": "created_at",
-                      "description": "Поле для сортировки (created_at/due_date)"
+                      "value": "-created_at",
+                      "description": "Для сортировки задач по сроку выполнения (due_date) или дате создания (created_at) передавайте в параметре sort название поля для сортировки по возрастанию или с префиксом - для сортировки по убыванию (например, due_date или -created_at)."
                     },
                     {
                       "key": "per_page",

@@ -20,7 +20,9 @@ class TaskService implements TaskServiceInterface
                 ->where('user_id', $userId)
                 ->search($filters['search'] ?? null);
 
-            $query->orderBy($this->resolveSortField($filters['sort'] ?? null));
+            $sort = $this->resolveSort($filters['sort'] ?? null);
+            $query->orderBy($sort['field'], $sort['direction']);
+
             $perPage = max(1, min((int)($filters['per_page'] ?? 10), 100));
 
             return $query->paginate($perPage);
@@ -78,10 +80,28 @@ class TaskService implements TaskServiceInterface
         Cache::tags(['user:' . auth()->id()])->flush();
     }
 
-    private function resolveSortField(?string $sort): string
+    private function resolveSort(?string $sort): array
     {
-        $allowed = ['due_date', 'created_at'];
+        $allowedFields = ['due_date', 'created_at'];
+        $defaultField = 'due_date';
+        $defaultDirection = 'asc';
 
-        return in_array($sort, $allowed, true) ? $sort : 'due_date';
+        if (empty($sort)) {
+            return ['field' => $defaultField, 'direction' => $defaultDirection];
+        }
+
+        $direction = $defaultDirection;
+        $field = $sort;
+
+        if (str_starts_with($sort, '-')) {
+            $direction = 'desc';
+            $field = substr($sort, 1);
+        }
+
+        if (!in_array($field, $allowedFields, true)) {
+            $field = $defaultField;
+        }
+
+        return ['field' => $field, 'direction' => $direction];
     }
 }
