@@ -359,6 +359,25 @@ class TaskServiceTest extends TestCase
         $this->assertCount(4, $result->items());
     }
 
+    public function test_list_cache_is_flushed_after_update(): void
+    {
+        Task::factory()->count(3)->create([
+            'user_id' => $this->user->id,
+            'status_id' => $this->status->id,
+            'priority_id' => $this->priority->id,
+            'category_id' => $this->category->id,
+        ]);
+
+        $tasks = $this->taskService->list([]);
+        $taskId = $tasks->items()[0]->id;
+
+        $this->taskService->update($taskId, ['title' => 'Updated After Cache']);
+
+        $result = $this->taskService->list([]);
+        $this->assertCount(3, $result->items());
+        $this->assertEquals('Updated After Cache', $result->items()[0]->title);
+    }
+
     public function test_find_uses_cache_on_subsequent_calls(): void
     {
         $task = Task::factory()->create([

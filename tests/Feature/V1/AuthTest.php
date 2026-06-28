@@ -214,4 +214,28 @@ class AuthTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    public function test_registration_fails_with_invalid_phone(): void
+    {
+        $data = $this->validRegistrationData;
+        $data['phone'] = 'invalid-phone-no-digits';
+        $data['email'] = 'phone-test@example.com';
+
+        $response = $this->postJson('/api/v1/auth/register', $data);
+
+        $response->assertStatus(422)
+            ->assertJson(['error' => 'Validation failed.']);
+    }
+
+    public function test_registration_fails_with_short_password(): void
+    {
+        $data = $this->validRegistrationData;
+        $data['email'] = 'shortpw@example.com';
+        $data['password'] = '1234';
+
+        $response = $this->postJson('/api/v1/auth/register', $data);
+
+        $response->assertStatus(422)
+            ->assertJson(['error' => 'Validation failed.']);
+    }
 }

@@ -278,6 +278,17 @@ class TaskTest extends TestCase
         $response->assertStatus(422);
     }
 
+    public function test_create_task_without_description(): void
+    {
+        $data = $this->validTaskData;
+        unset($data['description']);
+
+        $response = $this->withHeaders($this->authHeaders())
+            ->postJson('/api/v1/tasks', $data);
+
+        $response->assertStatus(201);
+    }
+
     public function test_can_update_task(): void
     {
         $task = Task::factory()->create([
