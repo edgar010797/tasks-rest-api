@@ -8,8 +8,6 @@ for arg in "$@"; do
     fi
 done
 
-echo "Клонирование репозитория..."
-git clone https://github.com/edgar010797/tasks-rest-api.git
 cd tasks-rest-api
 
 echo "Настройка окружения..."
